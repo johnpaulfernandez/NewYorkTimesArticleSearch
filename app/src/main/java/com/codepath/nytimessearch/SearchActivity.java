@@ -43,6 +43,10 @@ public class SearchActivity extends AppCompatActivity {
     ArrayList<Article> articles;
     ArticleArrayAdapter adapter;
 
+    // Store a member variable for the listener
+    private EndlessScrollListener scrollListener;
+    private static int pageNum;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -86,6 +90,20 @@ public class SearchActivity extends AppCompatActivity {
 
     public void onArticleSearch(View view) {
 
+        pageNum = 0;
+
+        // 1. First, clear the array of data
+        articles.clear();
+        // 2. Notify the adapter of the update
+        adapter.notifyDataSetChanged(); // or notifyItemRangeRemoved
+        // 3. Reset endless scroll listener when performing a new search
+        scrollListener.resetState();
+
+        sendAPIRequest();
+    }
+
+    private void sendAPIRequest() {
+
         String query = etQuery.getText().toString();
 
         //Toast.makeText(this, "Searching for " + query, Toast.LENGTH_SHORT).show();
@@ -96,7 +114,7 @@ public class SearchActivity extends AppCompatActivity {
 
         RequestParams params = new RequestParams();
 
-        params.put("page", 0);
+        params.put("page", pageNum++);
         params.put("q", query);
 
         params.put("sort", (FilterActivity.sortOrderIndex == 0 ? "oldest" : "newest"));
@@ -105,7 +123,8 @@ public class SearchActivity extends AppCompatActivity {
             params.put("begin_date", beginDate);
 
         if (FilterActivity.bArts || FilterActivity.bFashion || FilterActivity.bSports) {
-            String news_desk = "news_desk:(";;
+            String news_desk = "news_desk:(";
+            ;
 
             if (FilterActivity.bArts) {
                 news_desk += "\"Arts\"";
@@ -127,7 +146,7 @@ public class SearchActivity extends AppCompatActivity {
 
         params.put("api-key", "1ae65aff108b4882a37d1f0131eb3039");
 
-        client.get(url, params, new JsonHttpResponseHandler(){
+        client.get(url, params, new JsonHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
                 //Log.d("DEBUG", response.toString());
@@ -172,24 +191,29 @@ public class SearchActivity extends AppCompatActivity {
                 if (browserIntent.resolveActivity(getPackageManager()) != null) {
                     startActivity(browserIntent);
                 }
-
             }
         });
     }
 
     public void setUpEndlessScroll() {
 
-        // Attach the listener to the AdapterView onCreate
-        gvResults.setOnScrollListener(new EndlessScrollListener() {
+        // Retain an instance so that you can call `resetState()` for fresh searches
+        scrollListener = new EndlessScrollListener() {
             @Override
             public boolean onLoadMore(int page, int totalItemsCount) {
                 // Triggered only when new data needs to be appended to the list
-                // Add whatever code is needed to append new items to your AdapterView
+                // Add whatever code is needed to append new items to the bottom of the list
                 loadNextDataFromApi(page);
-                // or loadNextDataFromApi(totalItemsCount);
+                //                // or loadNextDataFromApi(totalItemsCount);
                 return true; // ONLY if more data is actually being loaded; false otherwise.
             }
-        });
+        };
+
+        // Attach the listener to the AdapterView onCreate
+        gvResults.setOnScrollListener(scrollListener);
+
+        // Adds the scroll listener to RecyclerView
+        //rvItems.addOnScrollListener(scrollListener);
     }
 
     // Append the next page of data into the adapter
@@ -200,5 +224,6 @@ public class SearchActivity extends AppCompatActivity {
         //  --> Deserialize and construct new model objects from the API response
         //  --> Append the new data objects to the existing set of items inside the array of items
         //  --> Notify the adapter of the new items made with `notifyDataSetChanged()`
+        sendAPIRequest();
     }
 }
