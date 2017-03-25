@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">NYTimesSearch</string>
+    <string name="app_name">New York Times Search</string>
     <string name="Hint">Enter search query</string>
     <string name="Search">Search</string>
 

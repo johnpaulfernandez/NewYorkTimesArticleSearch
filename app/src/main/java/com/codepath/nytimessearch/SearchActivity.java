@@ -1,13 +1,20 @@
 package com.codepath.nytimessearch;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.SearchView;
+import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.WebView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -26,6 +33,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import cz.msebera.android.httpclient.Header;
@@ -36,8 +44,7 @@ import static com.codepath.nytimessearch.FilterActivity.beginDate;
 
 public class SearchActivity extends AppCompatActivity {
 
-    EditText etQuery;
-    Button btnSearch;
+    public static final String ID_WEB_URL = "ID_WEB_URL";
     GridView gvResults;
 
     ArrayList<Article> articles;
@@ -46,6 +53,8 @@ public class SearchActivity extends AppCompatActivity {
     // Store a member variable for the listener
     private EndlessScrollListener scrollListener;
     private static int pageNum;
+
+    String sQuery;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,8 +66,6 @@ public class SearchActivity extends AppCompatActivity {
     }
 
     private void setupViews() {
-        etQuery = (EditText) findViewById(R.id.etQuery);
-        btnSearch = (Button) findViewById(R.id.btnSearch);
         gvResults = (GridView) findViewById(R.id.gvResults);
 
         articles = new ArrayList<>();
@@ -70,7 +77,32 @@ public class SearchActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu, menu);
-        return true;
+
+        // Use the ActionBar SearchView as the query box instead of an EditText
+        MenuItem searchItem = menu.findItem(R.id.action_search);
+        final SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                sQuery = query;
+                onArticleSearch();
+
+                // workaround to avoid issues with some emulators and keyboard devices firing twice if a keyboard enter is used
+                // see https://code.google.com/p/android/issues/detail?id=24599
+                searchView.clearFocus();
+
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
+
+
+        return super.onCreateOptionsMenu(menu);
+
     }
 
     @Override
@@ -88,7 +120,7 @@ public class SearchActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void onArticleSearch(View view) {
+    public void onArticleSearch() {
 
         pageNum = 0;
 
@@ -99,14 +131,15 @@ public class SearchActivity extends AppCompatActivity {
         // 3. Reset endless scroll listener when performing a new search
         scrollListener.resetState();
 
-        sendAPIRequest();
+        // Check for Network Connectivity
+        if (isNetworkAvailable())
+            // Perform a HTTP GET request with parameters.
+            sendAPIRequest();
+        else
+            Toast.makeText(this, "Network not available!", Toast.LENGTH_SHORT).show();
     }
 
     private void sendAPIRequest() {
-
-        String query = etQuery.getText().toString();
-
-        //Toast.makeText(this, "Searching for " + query, Toast.LENGTH_SHORT).show();
 
         AsyncHttpClient client = new AsyncHttpClient();
 
@@ -115,7 +148,7 @@ public class SearchActivity extends AppCompatActivity {
         RequestParams params = new RequestParams();
 
         params.put("page", pageNum++);
-        params.put("q", query);
+        params.put("q", sQuery);
 
         params.put("sort", (FilterActivity.sortOrderIndex == 0 ? "oldest" : "newest"));
 
@@ -186,11 +219,9 @@ public class SearchActivity extends AppCompatActivity {
                 // Get the data item for position
                 Article article = adapter.getItem(position);
 
-                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(article.getWebUrl()));
-
-                if (browserIntent.resolveActivity(getPackageManager()) != null) {
-                    startActivity(browserIntent);
-                }
+                Intent intent = new Intent(SearchActivity.this, ArticleContentActivity.class);
+                intent.putExtra(ID_WEB_URL, article.getWebUrl());
+                startActivity(intent);
             }
         });
     }
@@ -226,4 +257,12 @@ public class SearchActivity extends AppCompatActivity {
         //  --> Notify the adapter of the new items made with `notifyDataSetChanged()`
         sendAPIRequest();
     }
+
+    private Boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting();
+    }
+
 }
