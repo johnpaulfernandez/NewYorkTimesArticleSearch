@@ -1,10 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="com.codepath.nytimessearch.FilterActivity">
+    android:layout_height="wrap_content"
+    tools:context="com.codepath.nytimessearch.FilterDialogFragment">
 
     <TextView
         android:id="@+id/tvSortOrder"
@@ -78,21 +76,12 @@
         android:layout_below="@+id/cbSports"
         android:layout_alignLeft="@+id/cbSports"
         android:layout_alignStart="@+id/cbSports" />
-    <CheckBox
-        android:id="@+id/cbSports"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/sports"
-        android:layout_below="@+id/cbArts"
-        android:layout_alignLeft="@+id/cbArts"
-        android:layout_alignStart="@+id/cbArts" />
 
     <TextView
         android:id="@+id/tvDate"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="TextView"
-        android:onClick="showDatePickerDialog"
         android:layout_alignBaseline="@+id/tvBeginDate"
         android:layout_alignBottom="@+id/tvBeginDate"
         android:layout_toRightOf="@+id/tvNewsDesk"
@@ -100,4 +89,12 @@
         android:layout_marginLeft="27dp"
         android:layout_marginStart="27dp" />
 
+    <CheckBox
+        android:id="@+id/cbSports"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/cbArts"
+        android:layout_alignStart="@+id/cbArts"
+        android:layout_below="@+id/cbArts"
+        android:text="@string/sports" />
 </RelativeLayout>

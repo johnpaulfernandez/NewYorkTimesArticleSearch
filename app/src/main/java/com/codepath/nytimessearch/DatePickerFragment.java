@@ -26,9 +26,5 @@ public class DatePickerFragment extends android.support.v4.app.DialogFragment {
 
         // Create a new instance of TimePickerDialog and return it
         return new DatePickerDialog(getActivity(), listener, year, month, day);
-
     }
-
-
-
 }

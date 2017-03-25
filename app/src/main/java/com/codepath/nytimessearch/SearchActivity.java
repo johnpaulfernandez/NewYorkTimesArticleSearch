@@ -1,26 +1,22 @@
 package com.codepath.nytimessearch;
 
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.net.Uri;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.SearchView;
-import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.webkit.WebView;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
+import android.widget.DatePicker;
 import android.widget.GridView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.codepath.nytimessearch.adapters.ArticleArrayAdapter;
@@ -33,16 +29,16 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 import cz.msebera.android.httpclient.Header;
 
-import static android.R.attr.filter;
 import static android.R.attr.format;
-import static com.codepath.nytimessearch.FilterActivity.beginDate;
+import static com.codepath.nytimessearch.FilterDialogFragment.beginDate;
+import static com.codepath.nytimessearch.FilterDialogFragment.c;
 
-public class SearchActivity extends AppCompatActivity {
+public class SearchActivity extends AppCompatActivity implements DatePickerDialog.OnDateSetListener{
 
     public static final String ID_WEB_URL = "ID_WEB_URL";
     GridView gvResults;
@@ -55,6 +51,8 @@ public class SearchActivity extends AppCompatActivity {
     private static int pageNum;
 
     String sQuery;
+
+    FilterDialogFragment filterDialogFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -150,25 +148,25 @@ public class SearchActivity extends AppCompatActivity {
         params.put("page", pageNum++);
         params.put("q", sQuery);
 
-        params.put("sort", (FilterActivity.sortOrderIndex == 0 ? "oldest" : "newest"));
+        params.put("sort", (filterDialogFragment.sortOrderIndex == 0 ? "oldest" : "newest"));
 
         if (beginDate != null)
             params.put("begin_date", beginDate);
 
-        if (FilterActivity.bArts || FilterActivity.bFashion || FilterActivity.bSports) {
+        if (filterDialogFragment.bArts || filterDialogFragment.bFashion || filterDialogFragment.bSports) {
             String news_desk = "news_desk:(";
             ;
 
-            if (FilterActivity.bArts) {
+            if (filterDialogFragment.bArts) {
                 news_desk += "\"Arts\"";
             }
-            if (FilterActivity.bFashion) {
-                if (FilterActivity.bArts)
+            if (filterDialogFragment.bFashion) {
+                if (filterDialogFragment.bArts)
                     news_desk += " ";
                 news_desk += "\"Fashion & Style\"";
             }
-            if (FilterActivity.bSports) {
-                if (FilterActivity.bArts || FilterActivity.bFashion)
+            if (filterDialogFragment.bSports) {
+                if (filterDialogFragment.bArts || filterDialogFragment.bFashion)
                     news_desk += " ";
                 news_desk += "\"Sports\"";
             }
@@ -203,11 +201,28 @@ public class SearchActivity extends AppCompatActivity {
         onViewContents();
     }
 
-    public void launchFilterActivity(MenuItem item) {
+    public void launchFilterDialog(MenuItem item) {
 
-        Intent intent = new Intent(SearchActivity.this, FilterActivity.class);
-        startActivity(intent);
+//        Intent intent = new Intent(SearchActivity.this, FilterDialogFragment.class);
+//        startActivity(intent);
+        FragmentManager fm = getSupportFragmentManager();
+        filterDialogFragment = FilterDialogFragment.newInstance("Settings");
+        filterDialogFragment.show(fm, "fragment_filter");
 
+
+    }
+
+    // Handle the date selected
+    @Override
+    public void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+
+        c.set(Calendar.YEAR, year);
+        c.set(Calendar.MONTH, monthOfYear);
+        c.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+
+        beginDate = filterDialogFragment.format.format(c.getTime());
+        //newFragment.sendBackResult();
+        filterDialogFragment.showDate(year, monthOfYear + 1, dayOfMonth);
     }
 
     public void onViewContents() {
@@ -265,4 +280,7 @@ public class SearchActivity extends AppCompatActivity {
         return activeNetworkInfo != null && activeNetworkInfo.isConnectedOrConnecting();
     }
 
+    public void onSave(View view) {
+        filterDialogFragment.onSave(view);
+    }
 }
