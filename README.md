@@ -15,14 +15,14 @@ The following **required** functionality is completed:
   * [x] Sort order (oldest or newest)
 * [x] Subsequent searches have any filters applied to the search results
 * [x] User can tap on any article in results to view the contents in an embedded browser.
-* [ ] User can **scroll down to see more articles**. The maximum number of articles is limited by the API search.
+* [x] User can **scroll down to see more articles**. The maximum number of articles is limited by the API search.
 
 The following **optional** features are implemented:
 
-* [ ] Implements robust error handling, [check if internet is available](http://guides.codepath.com/android/Sending-and-Managing-Network-Requests#checking-for-network-connectivity), handle error cases, network failures
-* [ ] Used the **ActionBar SearchView** or custom layout as the query box instead of an EditText
-* [ ] User can **share an article link** to their friends or email it to themselves
-* [ ] Replaced Filter Settings Activity with a lightweight modal overlay
+* [x] Implements robust error handling, [check if internet is available](http://guides.codepath.com/android/Sending-and-Managing-Network-Requests#checking-for-network-connectivity), handle error cases, network failures
+* [x] Used the **ActionBar SearchView** or custom layout as the query box instead of an EditText
+* [x] User can **share an article link** to their friends or email it to themselves
+* [x] Replaced Filter Settings Activity with a lightweight modal overlay
 
 The following **bonus** features are implemented:
 * [ ] Replace Picasso with [Glide](http://inthecheesefactory.com/blog/get-to-know-glide-recommended-by-google/en) for more efficient image rendering.
@@ -36,7 +36,7 @@ The following **bonus** features are implemented:
 
 Here's a walkthrough of implemented user stories:
 
-<img src='http://i.imgur.com/tjzchkG.gif' title='Video Walkthrough' width='' alt='Video Walkthrough' />
+<img src='http://i.imgur.com/LxWW4aX.gif' title='Video Walkthrough' width='' alt='Video Walkthrough' />
 
 GIF created with [LiceCap](http://www.cockos.com/licecap/).
 
