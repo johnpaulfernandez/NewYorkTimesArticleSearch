@@ -54,11 +54,11 @@ public class ArticleArrayAdapter extends ArrayAdapter<Article> {
         // Populate the thumbnail image
         // download and cache remote images in the background
         // Android doesn't come with a library out of the box; we need to use third party library called Picasso to do the remote image fetching
-        String thumbnailUrl = article.getThumbnail();
+        String wideImageUrl = article.getWideImage();
 
         try {
-            if (!TextUtils.isEmpty(thumbnailUrl)) {
-                Picasso.with(this.getContext()).load(thumbnailUrl).fit().placeholder(R.mipmap.ic_launcher).into(imageView);
+            if (!TextUtils.isEmpty(wideImageUrl)) {
+                Picasso.with(this.getContext()).load(wideImageUrl).fit().placeholder(R.mipmap.ic_launcher).into(imageView);
 
             }
         } catch (Exception e) {

@@ -5,6 +5,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.List;
+
+import static com.codepath.nytimessearch.models.Multimedia.multimediaFromJSONArray;
 
 /**
  * Created by John on 3/18/2017.
@@ -14,24 +17,21 @@ public class Article {
 
     String webUrl;
     String headline;
-    String thumbnail;
+    String leadParagraph;
+    List<Multimedia> multimedia;
 
     public Article(JSONObject jsonObject) {
         try {
             this.webUrl = jsonObject.getString("web_url");
             this.headline = jsonObject.getJSONObject("headline").getString("main");
+            this.leadParagraph = jsonObject.getString("lead_paragraph");
 
-            JSONArray multimedia = new JSONArray();
+            JSONArray multimediaJSONArray = new JSONArray();
+            multimediaJSONArray = jsonObject.getJSONArray("multimedia");
 
-            multimedia = jsonObject.getJSONArray("multimedia");
+            if (multimediaJSONArray.length() > 0)
+                this.multimedia = multimediaFromJSONArray(multimediaJSONArray);
 
-            if (multimedia.length() > 0) {
-                JSONObject multimediaUrl = multimedia.getJSONObject(0);
-
-                this.thumbnail = "http://www.nytimes.com/" + multimediaUrl.getString("url");
-            } else {
-                this.thumbnail = "";
-            }
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -45,8 +45,23 @@ public class Article {
         return headline;
     }
 
-    public String getThumbnail() {
-        return thumbnail;
+    public String getLeadParagraph() {
+        return leadParagraph;
+    }
+
+    public List<Multimedia> getMultimedia() {
+        return multimedia;
+    }
+
+    public String getWideImage() {
+
+        for (Multimedia multimedia: getMultimedia()) {
+
+            if (multimedia.getSubtype() != null && multimedia.getSubtype().equalsIgnoreCase("wide"))
+                return multimedia.getUrl();
+        }
+
+        return "";
     }
 
     public static ArrayList<Article> articlesFromJSONArray (JSONArray array) {

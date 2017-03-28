@@ -9,7 +9,12 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,6 +25,7 @@ import android.widget.GridView;
 import android.widget.Toast;
 
 import com.codepath.nytimessearch.adapters.ArticleArrayAdapter;
+import com.codepath.nytimessearch.adapters.ArticlesRecyclerViewAdapter;
 import com.codepath.nytimessearch.models.Article;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.JsonHttpResponseHandler;
@@ -41,13 +47,16 @@ import static com.codepath.nytimessearch.FilterDialogFragment.c;
 public class SearchActivity extends AppCompatActivity implements DatePickerDialog.OnDateSetListener{
 
     public static final String ID_WEB_URL = "ID_WEB_URL";
-    GridView gvResults;
 
     ArrayList<Article> articles;
-    ArticleArrayAdapter adapter;
+    ArticlesRecyclerViewAdapter adapter;
+
+    StaggeredGridLayoutManager gridLayoutManager;
+
+    RecyclerView rvArticles;
 
     // Store a member variable for the listener
-    private EndlessScrollListener scrollListener;
+    private EndlessRecyclerViewScrollListener scrollListener;
     private static int pageNum;
 
     String sQuery;
@@ -60,15 +69,30 @@ public class SearchActivity extends AppCompatActivity implements DatePickerDialo
         setContentView(R.layout.activity_search);
 
         setupViews();
-        setUpEndlessScroll();
+        setUpEndlessRecyclerViewScroll();
     }
 
     private void setupViews() {
-        gvResults = (GridView) findViewById(R.id.gvResults);
 
         articles = new ArrayList<>();
-        adapter = new ArticleArrayAdapter(this, articles);
-        gvResults.setAdapter(adapter);
+
+        // Create adapter passing in the articles
+        adapter = new ArticlesRecyclerViewAdapter(this, articles);
+
+        // Lookup the recyclerview in activity layout
+        rvArticles = (RecyclerView) findViewById(R.id.rvArticles);
+
+        // Attach the adapter to the recyclerview to populate items
+        rvArticles.setAdapter(adapter);
+
+        // First param is number of columns and second param is orientation i.e Vertical or Horizontal
+        gridLayoutManager = new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL);
+
+        rvArticles.setItemAnimator(new DefaultItemAnimator());
+
+        // Attach the layout manager to the recycler view
+        rvArticles.setLayoutManager(gridLayoutManager);
+
     }
 
     @Override
@@ -88,6 +112,7 @@ public class SearchActivity extends AppCompatActivity implements DatePickerDialo
                 // workaround to avoid issues with some emulators and keyboard devices firing twice if a keyboard enter is used
                 // see https://code.google.com/p/android/issues/detail?id=24599
                 searchView.clearFocus();
+
 
                 return true;
             }
@@ -185,7 +210,8 @@ public class SearchActivity extends AppCompatActivity implements DatePickerDialo
                 JSONArray jsonArray = null;
                 try {
                     jsonArray = response.getJSONObject("response").getJSONArray("docs");
-                    adapter.addAll(Article.articlesFromJSONArray(jsonArray));
+                    articles.addAll(Article.articlesFromJSONArray(jsonArray));
+                    adapter.notifyDataSetChanged();
                     Log.d("DEBUG", articles.toString());
                 } catch (JSONException e) {
                     e.printStackTrace();
@@ -203,13 +229,9 @@ public class SearchActivity extends AppCompatActivity implements DatePickerDialo
 
     public void launchFilterDialog(MenuItem item) {
 
-//        Intent intent = new Intent(SearchActivity.this, FilterDialogFragment.class);
-//        startActivity(intent);
         FragmentManager fm = getSupportFragmentManager();
         filterDialogFragment = FilterDialogFragment.newInstance("Settings");
         filterDialogFragment.show(fm, "fragment_filter");
-
-
     }
 
     // Handle the date selected
@@ -221,18 +243,18 @@ public class SearchActivity extends AppCompatActivity implements DatePickerDialo
         c.set(Calendar.DAY_OF_MONTH, dayOfMonth);
 
         beginDate = filterDialogFragment.format.format(c.getTime());
-        //newFragment.sendBackResult();
         filterDialogFragment.showDate(year, monthOfYear + 1, dayOfMonth);
     }
 
     public void onViewContents() {
 
-        gvResults.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
+        adapter.setOnItemClickListener(new ArticlesRecyclerViewAdapter.OnItemClickListener(){
+            @Override
+            public void onItemClick(View itemView, int position) {
                 // Get the data item for position
-                Article article = adapter.getItem(position);
+                //Article article = adapter.getItem(position);
+                Article article = articles.get(position);
 
                 Intent intent = new Intent(SearchActivity.this, ArticleContentActivity.class);
                 intent.putExtra(ID_WEB_URL, article.getWebUrl());
@@ -241,26 +263,22 @@ public class SearchActivity extends AppCompatActivity implements DatePickerDialo
         });
     }
 
-    public void setUpEndlessScroll() {
+    public void setUpEndlessRecyclerViewScroll() {
 
         // Retain an instance so that you can call `resetState()` for fresh searches
-        scrollListener = new EndlessScrollListener() {
+        scrollListener = new EndlessRecyclerViewScrollListener(gridLayoutManager) {
             @Override
-            public boolean onLoadMore(int page, int totalItemsCount) {
+            public void onLoadMore(int page, int totalItemsCount, RecyclerView view) {
                 // Triggered only when new data needs to be appended to the list
                 // Add whatever code is needed to append new items to the bottom of the list
                 loadNextDataFromApi(page);
-                //                // or loadNextDataFromApi(totalItemsCount);
-                return true; // ONLY if more data is actually being loaded; false otherwise.
             }
         };
 
-        // Attach the listener to the AdapterView onCreate
-        gvResults.setOnScrollListener(scrollListener);
-
         // Adds the scroll listener to RecyclerView
-        //rvItems.addOnScrollListener(scrollListener);
+        rvArticles.addOnScrollListener(scrollListener);
     }
+
 
     // Append the next page of data into the adapter
     // This method probably sends out a network request and appends new data items to your adapter.
