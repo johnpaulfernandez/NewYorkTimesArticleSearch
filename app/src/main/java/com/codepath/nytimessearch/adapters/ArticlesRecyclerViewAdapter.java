@@ -6,7 +6,6 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -14,27 +13,28 @@ import com.bumptech.glide.Glide;
 import com.codepath.nytimessearch.R;
 import com.codepath.nytimessearch.models.Article;
 import com.codepath.nytimessearch.utils.Utils;
-import com.squareup.picasso.Picasso;
 
 import java.util.List;
-
-import static android.R.attr.button;
-import static android.R.attr.thumbnail;
 
 /**
  * Created by John on 3/25/2017.
  */
 
-public class ArticlesRecyclerViewAdapter extends RecyclerView.Adapter<ArticlesRecyclerViewAdapter.ViewHolder> {
+public class ArticlesRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     // Store a member variable for the articles
     private List<Article> mArticles;
     // Store the context for easy access
     private Context mContext;
 
+    private final int NO_IMAGE = 0, WITH_IMAGE = 1;
+    String wideImageUrl;
+
+
     /***** Creating OnItemClickListener *****/
     // Define listener member variable
     public static OnItemClickListener listener;
+
     // Define the listener interface
     public interface OnItemClickListener {
         void onItemClick(View itemView, int position);
@@ -43,42 +43,6 @@ public class ArticlesRecyclerViewAdapter extends RecyclerView.Adapter<ArticlesRe
     // Define the method that allows the parent activity or fragment to define the listener
     public void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;
-    }
-
-    // Provide a direct reference to each of the views within a data item
-    // Used to cache the views within the item layout for fast access
-    public static class ViewHolder extends RecyclerView.ViewHolder {
-        // Your holder should contain a member variable
-        // for any view that will be set as you render a row
-        public TextView tvTitle;
-        public ImageView ivImage;
-        public TextView tvLeadParagraph;
-
-        // We also create a constructor that accepts the entire item row
-        // and does the view lookups to find each subview
-        public ViewHolder(final View itemView) {
-            // Stores the itemView in a public final member variable that can be used
-            // to access the context from any ViewHolder instance.
-            super(itemView);
-
-            tvTitle = (TextView) itemView.findViewById(R.id.tvTitle);
-            ivImage = (ImageView) itemView.findViewById(R.id.ivImage);
-            tvLeadParagraph = (TextView) itemView.findViewById(R.id.tvLeadParagraph);
-
-            // Setup the click listener
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    // Triggers click upwards to the adapter on click
-                    if (listener != null) {
-                        int position = getAdapterPosition();
-                        if (position != RecyclerView.NO_POSITION) {
-                            listener.onItemClick(itemView, position);
-                        }
-                    }
-                }
-            });
-        }
     }
 
     // Pass in the article array into the constructor
@@ -94,41 +58,92 @@ public class ArticlesRecyclerViewAdapter extends RecyclerView.Adapter<ArticlesRe
 
     // Usually involves inflating a layout from XML and returning the holder
     @Override
-    public ArticlesRecyclerViewAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+
+        RecyclerView.ViewHolder viewHolder;
         Context context = parent.getContext();
         LayoutInflater inflater = LayoutInflater.from(context);
 
         // Inflate the custom layout
-        View articleView = inflater.inflate(R.layout.item_article_result, parent, false);
-
         // Return a new holder instance
-        ViewHolder viewHolder = new ViewHolder(articleView);
+        switch (viewType) {
+            case NO_IMAGE:
+                View v1 = inflater.inflate(R.layout.item_article_no_image, parent, false);
+                viewHolder = new ViewHolderNoImage(v1);
+                break;
+            case WITH_IMAGE:
+                View v2 = inflater.inflate(R.layout.item_article_with_image, parent, false);
+                viewHolder = new ViewHolderWithImage(v2);
+                break;
+            default:
+                View v = inflater.inflate(android.R.layout.simple_list_item_1, parent, false);
+                viewHolder = new ViewHolderWithImage(v);
+                break;
+        }
         return viewHolder;
     }
 
+    /**
+     * This method internally calls onBindViewHolder(ViewHolder, int) to update the
+     * RecyclerView.ViewHolder contents with the item at the given position
+     * and also sets up some private fields to be used by RecyclerView.
+     *
+     * @param viewHolder The type of RecyclerView.ViewHolder to populate
+     * @param position Item position in the viewgroup.
+     */
     // Involves populating data into the item through holder
     @Override
-    public void onBindViewHolder(ArticlesRecyclerViewAdapter.ViewHolder viewHolder, int position) {
+    public void onBindViewHolder(final RecyclerView.ViewHolder viewHolder, int position) {
+
+        switch (viewHolder.getItemViewType()) {
+            case NO_IMAGE:
+                ViewHolderNoImage vh1 = (ViewHolderNoImage) viewHolder;
+                configureViewHolderNoImage(vh1, position);
+                break;
+            case WITH_IMAGE:
+                ViewHolderWithImage vh2 = (ViewHolderWithImage) viewHolder;
+                configureViewHolderWithImage(vh2, position);
+                break;
+        }
+
+        // Setup the click listener
+        viewHolder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Triggers click upwards to the adapter on click
+                if (listener != null) {
+                    int position = viewHolder.getAdapterPosition();
+                    if (position != RecyclerView.NO_POSITION) {
+                        listener.onItemClick(viewHolder.itemView, position);
+                    }
+                }
+            }
+        });
+    }
+
+
+    private void configureViewHolderNoImage(ViewHolderNoImage vh1, int position) {
         // Get the data model based on position
         Article article = mArticles.get(position);
 
-        // Set item views based on your views and data model
-        TextView headline = viewHolder.tvTitle;
-        TextView leadParagraph = viewHolder.tvLeadParagraph;
+        if (article != null) {
+            vh1.getHeadline().setText(article.getHeadline());
+            vh1.getLeadParagraph().setText(article.getLeadParagraph());
+        }
+    }
 
-        headline.setText(article.getHeadline());
-        leadParagraph.setText(article.getLeadParagraph());
-        ImageView image = viewHolder.ivImage;
+    private void configureViewHolderWithImage(ViewHolderWithImage vh2, int position) {
+        // Get the data model based on position
+        Article article = mArticles.get(position);
 
-        image.getLayoutParams().height = getScaledHeight(mContext);
+        if (article != null) {
+            vh2.getHeadline().setText(article.getHeadline());
+            vh2.getLeadParagraph().setText(article.getLeadParagraph());
 
-        String wideImageUrl;
-
-        if (article.getMultimedia() != null) {
-            wideImageUrl = article.getWideImage();
+            vh2.getImage().getLayoutParams().height = getScaledHeight(mContext);
 
             if (!TextUtils.isEmpty(wideImageUrl)) {
-                Glide.with(mContext).load(wideImageUrl).into(image);
+                Glide.with(mContext).load(wideImageUrl).into(vh2.getImage());
             }
         }
     }
@@ -139,8 +154,22 @@ public class ArticlesRecyclerViewAdapter extends RecyclerView.Adapter<ArticlesRe
         return mArticles.size();
     }
 
+    @Override
+    public int getItemViewType(int position) {
+
+        if (mArticles.get(position).getMultimedia() != null) {
+            wideImageUrl = mArticles.get(position).getWideImage();
+
+            if (wideImageUrl != null)
+                return WITH_IMAGE;
+        }
+        return NO_IMAGE;
+
+    }
+
     private int getScaledHeight(Context context) {
         int totalWidth = Utils.getDisplayMetrics(context).widthPixels;
         return ((totalWidth / 2) / 16) * 9;
     }
+
 }

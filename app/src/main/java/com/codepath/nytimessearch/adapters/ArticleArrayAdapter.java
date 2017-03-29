@@ -1,12 +1,7 @@
 package com.codepath.nytimessearch.adapters;
 
 import android.content.Context;
-import android.net.Uri;
-import android.support.annotation.LayoutRes;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,7 +22,7 @@ import java.util.List;
 public class ArticleArrayAdapter extends ArrayAdapter<Article> {
 
     public ArticleArrayAdapter(Context context, List<Article> articles) {
-        super(context, R.layout.item_article_result, articles);
+        super(context, R.layout.item_article_with_image, articles);
     }
 
     @Override
@@ -39,7 +34,7 @@ public class ArticleArrayAdapter extends ArrayAdapter<Article> {
         // If not using a recycled view (no available reincarnated view), inflate the layout
         if (convertView == null) {
             LayoutInflater inflater = LayoutInflater.from(getContext());
-            convertView = inflater.inflate(R.layout.item_article_result, parent, false);
+            convertView = inflater.inflate(R.layout.item_article_with_image, parent, false);
         }
 
         // Find the image
