@@ -1,5 +1,5 @@
-# NewYorkTimesArticleSearch
-NewYorkTimesArticleSearch is an android app that allows a user to search for articles on web using simple filters. The app utilizes New York Times Search API.
+# News to Go
+News to Go is an android app that allows a user to search for articles on web using simple filters. The app utilizes New York Times Search API.
 
 ## User Stories
 
